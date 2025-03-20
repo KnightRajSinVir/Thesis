@@ -1,5 +1,4 @@
 VITIS_PLATFORM=/opt/xilinx/platforms/xilinx_vck5000_gen4x8_qdma_2_202220_1/xilinx_vck5000_gen4x8_qdma_2_202220_1.xpfm
-PL_FREQ=300000000
 
 compile_x86sim:
 	mkdir -p work
@@ -7,7 +6,6 @@ compile_x86sim:
 	v++ -c --mode aie \
 		--platform=$(VITIS_PLATFORM) \
 		--target=x86sim \
-		--freqhz=$(PL_FREQ) \
 		--work_dir=x86sim \
 		--config ../aie.cfg \
 		--aie.output-archive=libadf_x86sim.a \
@@ -19,7 +17,6 @@ compile_hw:
 	v++ -c --mode aie \
         --platform=$(VITIS_PLATFORM) \
         --target=hw \
-        --freqhz=$(PL_FREQ) \
         --work_dir=hw \
 		--config=../aie.cfg \
 		--aie.output-archive=libadf_hw.a \
