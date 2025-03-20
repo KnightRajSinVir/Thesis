@@ -4,7 +4,7 @@
 #include <aie_api/aie.hpp>
 
 #define BUFFER_DEPTH 128
-#define WORD_SIZE 32
+#define SIMD_SIZE 8
 
 void k_dummy(
     adf::input_buffer<int32>&__restrict a_in,

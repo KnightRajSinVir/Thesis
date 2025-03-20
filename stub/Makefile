@@ -18,7 +18,15 @@ link_hw:
 
 package_hw:
 	cd work && \
-	v++ -p -f $(VITIS_PLATFORM) -t hw hw.xsa -o hw.xclbin --package.boot_mode=ospi
+	v++ -p -f $(VITIS_PLATFORM) -t hw libadf.a hw.xsa -o hw.xclbin --package.boot_mode=ospi
+
+compile_host:
+	mkdir -p work
+	cd work && \
+	g++ -std=c++17 -I$(XILINX_XRT)/include -L$(XILINX_XRT)/lib ../host/main.cpp -lxrt_coreutil -lpthread
+
+run_host:
+	cd work && ./a.out
 
 clean:
 	make -C aie clean

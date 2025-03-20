@@ -24,8 +24,8 @@ public:
         connect(a_in.out[0], k0.in[0]);
         connect(b_in.out[0], k0.in[1]);
         connect(k0.out[0], c_out.in[0]);
-        dimensions(k0.in[0]) = {BUFFER_DEPTH * WORD_SIZE};
-        dimensions(k0.in[1]) = {BUFFER_DEPTH * WORD_SIZE};
-        dimensions(k0.out[0]) = {BUFFER_DEPTH * WORD_SIZE};
+        dimensions(k0.in[0]) = {BUFFER_DEPTH * SIMD_SIZE};
+        dimensions(k0.in[1]) = {BUFFER_DEPTH * SIMD_SIZE};
+        dimensions(k0.out[0]) = {BUFFER_DEPTH * SIMD_SIZE};
     }
 };
