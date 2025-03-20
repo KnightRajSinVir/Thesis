@@ -2,7 +2,8 @@ import random
 import os
 
 SIMD_SIZE = 8
-TEST_SIZE = 256
+BANK_SIZE = 128
+NOF_ROUNDS = 2
 
 def file_writer(fname, data):
     with open(fname, 'w') as fp: 
@@ -15,7 +16,7 @@ a_in = []
 b_in = []
 c_out = []
 
-for i in range(TEST_SIZE * SIMD_SIZE):
+for i in range(BANK_SIZE * SIMD_SIZE * NOF_ROUNDS):
     a = random.randint(0, 2**30-1)
     b = random.randint(0, 2**30-1)
     c = a + b

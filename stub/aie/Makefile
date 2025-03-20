@@ -1,36 +1,35 @@
-VITIS_PLATFORM=xilinx-vck5000-gen4x8-qdma-base-2
+VITIS_PLATFORM=/opt/xilinx/platforms/xilinx_vck5000_gen4x8_qdma_2_202220_1/xilinx_vck5000_gen4x8_qdma_2_202220_1.xpfm
+PL_FREQ=300000000
 
-compile_x86sim: work/libadf_x86sim.a
+compile_x86sim:
 	mkdir -p work
 	cd work && \
-	aiecompiler \
+	v++ -c --mode aie \
 		--platform=$(VITIS_PLATFORM) \
 		--target=x86sim \
-		--pl-freq=$(PL_FREQ) \
-		--include=../src \
-		--workdir=x86sim \
-		--output-archive=libadf_x86sim.a \
-		../src/*.cpp
+		--freqhz=$(PL_FREQ) \
+		--work_dir=x86sim \
+		--config ../aie.cfg \
+		--aie.output-archive=libadf_x86sim.a \
+		../src/graph.cpp
 
-compile_hw: work/libadf_hw.a
+compile_hw:
 	mkdir -p work
 	cd work && \
-	aiecompiler \
+	v++ -c --mode aie \
         --platform=$(VITIS_PLATFORM) \
         --target=hw \
-        --pl-freq=$(PL_FREQ) \
-        --include={{.TASKFILE_DIR}}/src \
-        --workdir=hw \
-        --output-archive=libadf_hw.a \
-        --xlopt=2 \
-        --verbose \
-        ../src/*.cpp \
+        --freqhz=$(PL_FREQ) \
+        --work_dir=hw \
+		--config=../aie.cfg \
+		--aie.output-archive=libadf_hw.a \
+        ../src/graph.cpp
 
-run_x86sim: compile_x86sim
+run_x86sim:
 	cd work && \
 	x86simulator --pkg-dir=./x86sim
 
-run_aiesim: compile_hw
+run_aiesim:
 	cd work && \
 	aiesimulator --pkg-dir=./hw --dump-vcd=dump --profile
 
