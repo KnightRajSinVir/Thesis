@@ -22,6 +22,16 @@ On mismatch, writes a corrected `c_out_fixed.txt` in the **same** format.
 
 import sys
 
+# Constants
+R = 1 << (31 * 13)
+
+# your 403-bit modulus n = Σ (q_limbs[i] << (31*i))
+p_val = 0x1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe5b9385f0b597d
+
+# your Montgomery constant p' = Σ (p_prime_limbs[i] << (31*i))
+p_prime_val = 0x5a14a7c315e0861bde90367ae35113a058a0706d580c03d25ef26bada1e44cc4d6d7014531757c3b0bcc8acc03b9582b
+
+
 def read_lines(fname, expect):
     with open(fname) as f:
         L = [list(map(int, line.split())) for line in f]
@@ -87,7 +97,10 @@ def main():
         a_val = reconstruct(A, BITS)
         b_val = reconstruct(B, BITS)
         c_val = reconstruct(C, BITS)
-        if a_val * b_val != c_val:
+
+        t      = a_val * b_val
+        calc_m = ((t % R) * p_prime_val) % R
+        if calc_m != c_val:
             print(f"Mismatch at idx={idx}: expected {a_val*b_val}, got {c_val}")
             mismatch = True
 

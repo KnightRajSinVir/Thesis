@@ -3,7 +3,7 @@
 # -------------------------------------------------------------------
 
 # Set this to the folder that contains both 'aie/' and 'pl/' subdirectories.
-PARENT_DIR ?= /home/rajdeep/Thesis/src/thesis_c/m1
+PARENT_DIR ?= /home/rajdeep/Thesis/src/thesis_c/m2
 
 # Derive AIE_DIR, PL_DIR and HOST_SRC from PARENT_DIR
 AIE_DIR    := $(PARENT_DIR)/aie

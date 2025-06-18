@@ -3,6 +3,38 @@
 #define LIMB_SIZE 31
 #define N_LIMBS 13
 
+static const uint32_t q_limbs[13] = {
+    0x5F0B597D,
+    0x7FCB7270, 
+    0x7FFFFFFF, 
+    0x7FFFFFFF, 
+    0x7FFFFFFF, 
+    0x7FFFFFFF,
+    0x7FFFFFFF, 
+    0x7FFFFFFF, 
+    0x7FFFFFFF, 
+    0x7FFFFFFF, 
+    0x7FFFFFFF,
+    0x7FFFFFFF,
+    0x0000001F
+};
+
+static const uint32_t p_prime_limbs[13] = {
+    0x03B9582B,  // limb 0  = bits [0..30]
+    0x17991598,  // limb 1  = bits [31..61]
+    0x45D5F0EC,  // limb 2  = bits [62..92]
+    0x36B80A29,  // limb 3  = bits [93..123]
+    0x1E44CC4D,  // limb 4  = bits [124..154]
+    0x5E4D75B4,  // limb 5  = bits [155..185]
+    0x0300F497,  // limb 6  = bits [186..216]
+    0x503836AC,  // limb 7  = bits [217..247]
+    0x5113A058,  // limb 8  = bits [248..278]
+    0x206CF5C6,  // limb 9  = bits [279..309]
+    0x02186F7A,  // limb 10 = bits [310..340]
+    0x253E18AF,  // limb 11 = bits [341..371]
+    0x000005A1   // limb 12 = bits [372..402]
+};
+
 // Macro to extract carry from the accumulator after MAC operations by extracting
 // the lower and upper parts of the accumulator, shifting them, and updating
 // the accumulator with the shifted values.
@@ -55,11 +87,29 @@ void k_dummy(
   v8acc48 acc_limb_extraction;
   v8int32 limb, limb_top_bit;
 
+  // Arrays for t and m 
+  v8int32 t[26];
+  v8int32 m[13];
+
+  v8int32 q_limbs_vector[13];
+  for (int i = 0; i < 13; i++) {
+    for (int j = 0; j < 8; j++) {
+      q_limbs_vector[i] = upd_elem(q_limbs_vector[i], j, q_limbs[i]);
+    }
+  }
+
+  v8int32 p_prime_limbs_vector[13];
+  for (int i = 0; i < 13; i++) {
+    for (int j = 0; j < 8; j++) {
+      p_prime_limbs_vector[i] = upd_elem(p_prime_limbs_vector[i], j, p_prime_limbs[i]);
+    }
+  }
+
   // k = 0 : a[0]b[0] is the first product
   acc = mul(a_ptr[0], b_ptr[0]);
 
   GET_LIMB_FROM_ACC();
-  c_ptr[0] = limb;
+  t[0] = limb;
   EXTRACT_CARRY_FROM_ACC();
 
   // k = 1 .. (N_LIMBS - 1): accumulate a[i]*b[k-i] for i=0..k
@@ -68,7 +118,7 @@ void k_dummy(
       acc = mac(acc, a_ptr[i], b_ptr[k - i]);
     }
     GET_LIMB_FROM_ACC();
-    c_ptr[k] = limb;
+    t[k] = limb;
     EXTRACT_CARRY_FROM_ACC();
   }
 
@@ -80,10 +130,29 @@ void k_dummy(
       acc = mac(acc, a_ptr[i], b_ptr[k - i]);
     }
     GET_LIMB_FROM_ACC();
-    c_ptr[k] = limb;
+    t[k] = limb;
     EXTRACT_CARRY_FROM_ACC();
   }
 
   // k = 2*N_LIMBS - 1: accumulator has the last limb
-  c_ptr[2 * N_LIMBS - 1] = srs(acc, 0);
+  t[2 * N_LIMBS - 1] = srs(acc, 0);
+
+  
+  // m = ( (t mod R) x p' ) mod R
+
+  // k = 0 : t[0]*p_prime_limbs[0] is the first product
+  acc = mul(t[0], p_prime_limbs_vector[0]);
+  GET_LIMB_FROM_ACC();
+  c_ptr[0] = limb;
+  EXTRACT_CARRY_FROM_ACC();
+
+  // k = 1 .. (N_LIMBS - 1): accumulate t[i]*p_prime_limbs[k-i] for i=0..k
+  for (int k = 1; k < N_LIMBS; k++) {
+    for (int i = 0; i <= k; i++) {
+      acc = mac(acc, t[i], p_prime_limbs_vector[k - i]);
+    }
+    GET_LIMB_FROM_ACC();
+    c_ptr[k] = limb;
+    EXTRACT_CARRY_FROM_ACC();
+  }
 }
