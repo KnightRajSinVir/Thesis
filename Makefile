@@ -132,12 +132,23 @@ aie_validate:
 	  $(AIE_DIR)/test/a_in.txt \
 	  $(AIE_DIR)/test/b_in.txt \
 	  $(AIE_DIR)/work/x86simulator_output/test/c_out.txt
+
+aie_hw_remove_timestamps:
+	python3 $(PARENT_DIR)/strip_timestamps.py \
+	  $(AIE_DIR)/work/aiesimulator_output/test/c_out.txt \
+	  $(AIE_DIR)/work/aiesimulator_output/test/c_out_cleaned.txt
+
+aie_hw_validate:
+	python3 $(PARENT_DIR)/validate.py \
+	  $(AIE_DIR)/test/a_in.txt \
+	  $(AIE_DIR)/test/b_in.txt \
+	  $(AIE_DIR)/work/aiesimulator_output/test/c_out_cleaned.txt
 	
 # This target pulls in the three steps in sequence
 aie_test_and_validate: aie_test_gen aie_x86sim aie_validate
 
 # This target pulls in the three steps in sequence
-aie_hw_test_and_validate: aie_test_gen aie_aiesim aie_validate
+aie_hw_test_and_validate: aie_test_gen aie_aiesim aie_hw_remove_timestamps aie_hw_validate
 
 # -------------------------------------------------------------------
 # Top‐level Build Targets
