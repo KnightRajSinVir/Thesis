@@ -1,0 +1,20 @@
+13:35:17 INFO  : updated workspace path: 
+13:35:17 INFO  : python3 /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt/scripts/rigel_scripts//repo.py -st   /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt
+13:35:17 INFO  : python3 /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt/scripts/rigel_scripts//repo.py -st  /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt
+13:35:18 INFO  : Successfully created repository data at /tmp/rigel_lopper_rajdeep6279607291656262752
+13:35:18 INFO  : Successfully created repository data at /tmp/rigel_lopper_rajdeep3305128824702110145
+13:35:18 INFO  : python3 /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt/scripts/rigel_scripts//get_template_data.py -d /tmp/rigel_lopper_rajdeep6567908374771489749 -r /tmp/rigel_lopper_rajdeep3305128824702110145/.repo.yaml
+13:35:18 INFO  : python3 /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt/scripts/rigel_scripts//get_template_data.py -d /tmp/rigel_lopper_rajdeep6279607291656262752 -r /tmp/rigel_lopper_rajdeep6279607291656262752/.repo.yaml
+13:35:18 INFO  : Embedded Template List generated successfully
+13:35:18 INFO  : Embedded Template List generated successfully
+13:35:18 INFO  : updated workspace path: 
+15:21:01 INFO  : updated workspace path: 
+15:21:01 INFO  : updated workspace path: 
+15:21:01 INFO  : python3 /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt/scripts/rigel_scripts//repo.py -st  /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt
+15:21:01 INFO  : python3 /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt/scripts/rigel_scripts//repo.py -st   /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt
+15:21:02 INFO  : Successfully created repository data at /tmp/rigel_lopper_rajdeep18247228227645071270
+15:21:02 INFO  : python3 /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt/scripts/rigel_scripts//get_template_data.py -d /tmp/rigel_lopper_rajdeep2192543004145213466 -r /tmp/rigel_lopper_rajdeep18247228227645071270/.repo.yaml
+15:21:02 INFO  : Successfully created repository data at /tmp/rigel_lopper_rajdeep9830135898326098832
+15:21:02 INFO  : python3 /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt/scripts/rigel_scripts//get_template_data.py -d /tmp/rigel_lopper_rajdeep9830135898326098832 -r /tmp/rigel_lopper_rajdeep9830135898326098832/.repo.yaml
+15:21:02 INFO  : Embedded Template List generated successfully
+15:21:02 INFO  : Embedded Template List generated successfully

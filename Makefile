@@ -3,7 +3,7 @@
 # -------------------------------------------------------------------
 
 # Set this to the folder that contains both 'aie/' and 'pl/' subdirectories.
-PARENT_DIR ?= /home/rajdeep/Thesis/src/thesis_c/m4
+PARENT_DIR ?= /home/rajdeep/Thesis/src/thesis_c/m5
 
 # Derive AIE_DIR, PL_DIR and HOST_SRC from PARENT_DIR
 AIE_DIR    := $(PARENT_DIR)/aie
@@ -135,6 +135,9 @@ aie_validate:
 	
 # This target pulls in the three steps in sequence
 aie_test_and_validate: aie_test_gen aie_x86sim aie_validate
+
+# This target pulls in the three steps in sequence
+aie_hw_test_and_validate: aie_test_gen aie_aiesim aie_validate
 
 # -------------------------------------------------------------------
 # Top‐level Build Targets
