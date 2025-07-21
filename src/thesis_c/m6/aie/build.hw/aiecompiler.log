@@ -1,0 +1,6 @@
+aietools : /tools/Xilinx/Vitis/2023.1/aietools
+ERROR: [aiecompiler 77-4170] Unable to find specified platform : xilinx_vck5000_gen4x8_qdma_2_202220_1
+
+Compilation Failed
+(WARNING:0, CRITICAL-WARNING:0, ERROR:1)
+/tools/Xilinx/Vitis/2023.1/aietools/bin/aiecompiler: line 83: kill: (-1965580) - No such process

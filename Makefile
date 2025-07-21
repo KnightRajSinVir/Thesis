@@ -3,7 +3,7 @@
 # -------------------------------------------------------------------
 
 # Set this to the folder that contains both 'aie/' and 'pl/' subdirectories.
-PARENT_DIR ?= /home/rajdeep/Thesis/src/thesis_c/m5
+PARENT_DIR ?= /home/rajdeep/Thesis/src/thesis_c/m7
 
 # Derive AIE_DIR, PL_DIR and HOST_SRC from PARENT_DIR
 AIE_DIR    := $(PARENT_DIR)/aie
@@ -113,7 +113,7 @@ pl_clean:
 
 # Generate test input files a_in and b_in for AIE 
 aie_test_gen:
-	python3 $(AIE_DIR)/test/test_gen.py
+	$(MAKE) -C $(PARENT_DIR) test_gen
 
 # Run AIE in x86 simulator
 .PHONY: aie_x86sim
@@ -128,10 +128,7 @@ aie_aiesim:
 	$(MAKE) aie_run_aiesim
 
 aie_validate:
-	python3 $(PARENT_DIR)/validate.py \
-	  $(AIE_DIR)/test/a_in.txt \
-	  $(AIE_DIR)/test/b_in.txt \
-	  $(AIE_DIR)/work/x86simulator_output/test/c_out.txt
+	$(MAKE) -C $(PARENT_DIR) x86simulator_output_validate
 
 aie_hw_remove_timestamps:
 	python3 $(PARENT_DIR)/strip_timestamps.py \

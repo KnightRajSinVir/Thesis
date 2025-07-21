@@ -33,7 +33,7 @@ def elliptical_curve_addition_thesis_model(x1_mont, y1_mont, x2_mont, y2_mont, l
     # l_mont is in the range [0, N - 1]
     # l_square is not reduced so, its range is [0, 2 * N - 1]
     l_square = helper_functions.montgomery_product_thesis(l_mont, l_mont, N, N_prime, R)
-    if not(0 <= l_square < R ** 2):
+    if not(0 <= l_square < R):
         print("l_square is not in the range [0, 2 * N - 1]")
         exit()
     

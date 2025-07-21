@@ -6,7 +6,7 @@ simple_graph g;
 
 int main() {
     g.init();
-    g.run(100);
+    g.run(128);
     g.end();
     return 0;
 }

@@ -31,7 +31,7 @@
     limb = limb + limb_top_bit;                                                 \
   } while (0)
 
-void k_1(
+void kmontgomery1(
     adf::input_buffer<int32>& __restrict a_in,
     adf::input_buffer<int32>& __restrict b_in,
     adf::output_buffer<int32>& __restrict t_out
@@ -53,8 +53,8 @@ void k_1(
 
   // Accumulator and vecroe for limb extraction 
   v8acc48 acc_limb_extraction;
-  v8int32 limb, limb_top_bit; // T[26  T[27]
-  
+  v8int32 limb, limb_top_bit;
+
   // k = 0 : a[0]b[0] is the first product
   acc = mul(a_ptr[0], b_ptr[0]);
   GET_LIMB_FROM_ACC();

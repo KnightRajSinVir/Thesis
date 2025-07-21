@@ -18,3 +18,19 @@
 15:21:02 INFO  : python3 /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt/scripts/rigel_scripts//get_template_data.py -d /tmp/rigel_lopper_rajdeep9830135898326098832 -r /tmp/rigel_lopper_rajdeep9830135898326098832/.repo.yaml
 15:21:02 INFO  : Embedded Template List generated successfully
 15:21:02 INFO  : Embedded Template List generated successfully
+12:40:50 INFO  : updated workspace path: 
+12:40:50 INFO  : python3 /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt/scripts/rigel_scripts//repo.py -st  /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt
+12:40:51 INFO  : Successfully created repository data at /tmp/rigel_lopper_rajdeep9486884694010224118
+12:40:51 INFO  : python3 /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt/scripts/rigel_scripts//get_template_data.py -d /tmp/rigel_lopper_rajdeep18221728949049809405 -r /tmp/rigel_lopper_rajdeep9486884694010224118/.repo.yaml
+12:40:51 INFO  : Embedded Template List generated successfully
+12:40:51 INFO  : updated workspace path: 
+12:42:50 INFO  : updated workspace path: 
+12:42:50 INFO  : python3 /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt/scripts/rigel_scripts//repo.py -st  /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt
+12:42:50 INFO  : python3 /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt/scripts/rigel_scripts//repo.py -st   /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt
+12:42:50 INFO  : Successfully created repository data at /tmp/rigel_lopper_rajdeep1417881961277743782
+12:42:50 INFO  : python3 /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt/scripts/rigel_scripts//get_template_data.py -d /tmp/rigel_lopper_rajdeep14899276049273378182 -r /tmp/rigel_lopper_rajdeep1417881961277743782/.repo.yaml
+12:42:50 INFO  : Successfully created repository data at /tmp/rigel_lopper_rajdeep10001564016114017073
+12:42:50 INFO  : python3 /tools/Xilinx/Vitis/2023.1/data/embeddedsw-sdt/scripts/rigel_scripts//get_template_data.py -d /tmp/rigel_lopper_rajdeep10001564016114017073 -r /tmp/rigel_lopper_rajdeep10001564016114017073/.repo.yaml
+12:42:51 INFO  : Embedded Template List generated successfully
+12:42:51 INFO  : Embedded Template List generated successfully
+12:42:51 INFO  : updated workspace path: 
