@@ -3,7 +3,7 @@
 # -------------------------------------------------------------------
 
 # Set this to the folder that contains both 'aie/' and 'pl/' subdirectories.
-PARENT_DIR ?= /home/rajdeep/Thesis/src/thesis_c/m7
+PARENT_DIR ?= /home/rajdeep/Thesis/src/thesis_c/m8
 
 # Derive AIE_DIR, PL_DIR and HOST_SRC from PARENT_DIR
 AIE_DIR    := $(PARENT_DIR)/aie
@@ -130,22 +130,14 @@ aie_aiesim:
 aie_validate:
 	$(MAKE) -C $(PARENT_DIR) x86simulator_output_validate
 
-aie_hw_remove_timestamps:
-	python3 $(PARENT_DIR)/strip_timestamps.py \
-	  $(AIE_DIR)/work/aiesimulator_output/test/c_out.txt \
-	  $(AIE_DIR)/work/aiesimulator_output/test/c_out_cleaned.txt
-
 aie_hw_validate:
-	python3 $(PARENT_DIR)/validate.py \
-	  $(AIE_DIR)/test/a_in.txt \
-	  $(AIE_DIR)/test/b_in.txt \
-	  $(AIE_DIR)/work/aiesimulator_output/test/c_out_cleaned.txt
+	$(MAKE) -C $(PARENT_DIR) aiesimulator_output_validate
 	
 # This target pulls in the three steps in sequence
 aie_test_and_validate: aie_test_gen aie_x86sim aie_validate
 
 # This target pulls in the three steps in sequence
-aie_hw_test_and_validate: aie_test_gen aie_aiesim aie_hw_remove_timestamps aie_hw_validate
+aie_hw_test_and_validate: aie_test_gen aie_aiesim aie_hw_validate
 
 # -------------------------------------------------------------------
 # Top‐level Build Targets
