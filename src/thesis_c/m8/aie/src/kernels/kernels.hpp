@@ -3,7 +3,7 @@
 #include <adf.h>
 #include <aie_api/aie.hpp>
 
-#define BUFFER_DEPTH 128
+#define BUFFER_DEPTH 16
 #define SIMD_SIZE 8
 
 void kmontgomery1(

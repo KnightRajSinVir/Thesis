@@ -3,6 +3,8 @@
 #include <adf.h>
 #include "kernels/kernels.hpp"
 
+#define BANK_SIZE 32
+
 using namespace adf;
 
 class simple_graph: public graph {
@@ -146,54 +148,54 @@ public:
         // connect to output y3
         connect(lambda_x1_x3_sub_y1.out[0], y3_out.in[0]);
 
-        dimensions(lambda_montgomery1.in[0]) = {128 * SIMD_SIZE};
-        dimensions(lambda_montgomery1.in[1]) = {128 * SIMD_SIZE};
-        dimensions(lambda_montgomery1.out[0]) = {128 * SIMD_SIZE};
+        dimensions(lambda_montgomery1.in[0]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_montgomery1.in[1]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_montgomery1.out[0]) = {BANK_SIZE * SIMD_SIZE};
 
-        dimensions(lambda_montgomery2.in[0]) = {128 * SIMD_SIZE};
-        dimensions(lambda_montgomery2.out[0]) = {128 * SIMD_SIZE};
+        dimensions(lambda_montgomery2.in[0]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_montgomery2.out[0]) = {BANK_SIZE * SIMD_SIZE};
 
-        dimensions(lambda_montgomery3.in[0]) = {128 * SIMD_SIZE};
-        dimensions(lambda_montgomery3.in[1]) = {128 * SIMD_SIZE};
-        dimensions(lambda_montgomery3.out[0]) = {128 * SIMD_SIZE};
+        dimensions(lambda_montgomery3.in[0]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_montgomery3.in[1]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_montgomery3.out[0]) = {BANK_SIZE * SIMD_SIZE};
 
-        dimensions(lambda_square_montgomery1.in[0]) = {128 * SIMD_SIZE};
-        dimensions(lambda_square_montgomery1.in[1]) = {128 * SIMD_SIZE};
-        dimensions(lambda_square_montgomery1.out[0]) = {128 * SIMD_SIZE};
+        dimensions(lambda_square_montgomery1.in[0]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_square_montgomery1.in[1]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_square_montgomery1.out[0]) = {BANK_SIZE * SIMD_SIZE};
 
-        dimensions(lambda_square_montgomery2.in[0]) = {128 * SIMD_SIZE};
-        dimensions(lambda_square_montgomery2.out[0]) = {128 * SIMD_SIZE};
+        dimensions(lambda_square_montgomery2.in[0]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_square_montgomery2.out[0]) = {BANK_SIZE * SIMD_SIZE};
 
-        dimensions(lambda_square_montgomery3.in[0]) = {128 * SIMD_SIZE};
-        dimensions(lambda_square_montgomery3.in[1]) = {128 * SIMD_SIZE};
-        dimensions(lambda_square_montgomery3.out[0]) = {128 * SIMD_SIZE};
+        dimensions(lambda_square_montgomery3.in[0]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_square_montgomery3.in[1]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_square_montgomery3.out[0]) = {BANK_SIZE * SIMD_SIZE};
 
-        dimensions(x1_add_x2.in[0]) = {128 * SIMD_SIZE};
-        dimensions(x1_add_x2.in[1]) = {128 * SIMD_SIZE};
-        dimensions(x1_add_x2.out[0]) = {128 * SIMD_SIZE};
+        dimensions(x1_add_x2.in[0]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(x1_add_x2.in[1]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(x1_add_x2.out[0]) = {BANK_SIZE * SIMD_SIZE};
 
-        dimensions(lambda_square_sub_x1_x2.in[0]) = {128 * SIMD_SIZE};
-        dimensions(lambda_square_sub_x1_x2.in[1]) = {128 * SIMD_SIZE};
-        dimensions(lambda_square_sub_x1_x2.out[0]) = {128 * SIMD_SIZE};
+        dimensions(lambda_square_sub_x1_x2.in[0]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_square_sub_x1_x2.in[1]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_square_sub_x1_x2.out[0]) = {BANK_SIZE * SIMD_SIZE};
 
-        dimensions(x1_sub_x3.in[0]) = {128 * SIMD_SIZE};
-        dimensions(x1_sub_x3.in[1]) = {128 * SIMD_SIZE};
-        dimensions(x1_sub_x3.out[0]) = {128 * SIMD_SIZE};
+        dimensions(x1_sub_x3.in[0]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(x1_sub_x3.in[1]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(x1_sub_x3.out[0]) = {BANK_SIZE * SIMD_SIZE};
 
-        dimensions(lambda_x1_x3_montgomery1.in[0]) = {128 * SIMD_SIZE};
-        dimensions(lambda_x1_x3_montgomery1.in[1]) = {128 * SIMD_SIZE};
-        dimensions(lambda_x1_x3_montgomery1.out[0]) = {128 * SIMD_SIZE};
+        dimensions(lambda_x1_x3_montgomery1.in[0]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_x1_x3_montgomery1.in[1]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_x1_x3_montgomery1.out[0]) = {BANK_SIZE * SIMD_SIZE};
 
-        dimensions(lambda_x1_x3_montgomery2.in[0]) = {128 * SIMD_SIZE};
-        dimensions(lambda_x1_x3_montgomery2.out[0]) = {128 * SIMD_SIZE};
+        dimensions(lambda_x1_x3_montgomery2.in[0]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_x1_x3_montgomery2.out[0]) = {BANK_SIZE * SIMD_SIZE};
 
-        dimensions(lambda_x1_x3_montgomery3.in[0]) = {128 * SIMD_SIZE};
-        dimensions(lambda_x1_x3_montgomery3.in[1]) = {128 * SIMD_SIZE};
-        dimensions(lambda_x1_x3_montgomery3.out[0]) = {128 * SIMD_SIZE};
+        dimensions(lambda_x1_x3_montgomery3.in[0]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_x1_x3_montgomery3.in[1]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_x1_x3_montgomery3.out[0]) = {BANK_SIZE * SIMD_SIZE};
 
-        dimensions(lambda_x1_x3_sub_y1.in[0]) = {128 * SIMD_SIZE};
-        dimensions(lambda_x1_x3_sub_y1.in[1]) = {128 * SIMD_SIZE};
-        dimensions(lambda_x1_x3_sub_y1.out[0]) = {128 * SIMD_SIZE};
+        dimensions(lambda_x1_x3_sub_y1.in[0]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_x1_x3_sub_y1.in[1]) = {BANK_SIZE * SIMD_SIZE};
+        dimensions(lambda_x1_x3_sub_y1.out[0]) = {BANK_SIZE * SIMD_SIZE};
    
     }
 };

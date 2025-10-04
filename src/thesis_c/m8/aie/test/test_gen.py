@@ -5,7 +5,7 @@ from helper_functions import mod_inverse, montgomery_multiplication
 
 # Parameters for the graph
 SIMD_SIZE = 8
-BANK_SIZE = 128
+BANK_SIZE = 16
 NOF_ROUNDS = 16
 
 def file_writer(fname, data):
@@ -63,7 +63,7 @@ y3_output = []
 
 # Split into 31 bit limbs and write to file
 for iteration in range(NOF_ROUNDS):
-    for j in range(128):
+    for j in range(BANK_SIZE):
         if j < 13:
             for i in range(8):
                 x1_in.append(x1_mont >> (31 * j) & 0x7FFFFFFF)
