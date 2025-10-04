@@ -1,0 +1,100 @@
+#include "kernels.hpp"
+
+#define LIMB_SIZE 31
+#define N_LIMBS 13
+
+static const uint32_t p_prime_limbs[13] = {
+  0x7FFCFFFD, // limb  0 = bits [  0.. 30]
+  0x13E7FFF9, // limb  1 = bits [ 31.. 61]
+  0x67444FA2, // limb  2 = bits [ 62.. 92]
+  0x4356DC96, // limb  3 = bits [ 93..123]
+  0x0E30B482, // limb  4 = bits [124..154]
+  0x5DE5DE19, // limb  5 = bits [155..185]
+  0x2CB6D305, // limb  6 = bits [186..216]
+  0x76650747, // limb  7 = bits [217..247]
+  0x68CF5819, // limb  8 = bits [248..278]
+  0x662DFDC4, // limb  9 = bits [279..309]
+  0x2BF251A2, // limb 10 = bits [310..340]
+  0x030837F5, // limb 11 = bits [341..371]
+  0x627A0CEB, // limb 12 = bits [372..402]
+};
+
+
+// Macro to extract carry from the accumulator after MAC operations by extracting
+// the lower and upper parts of the accumulator, shifting them, and updating
+// the accumulator with the shifted values.
+#define EXTRACT_CARRY_FROM_ACC()                                                \
+  do {                                                                          \
+    acc_lo = ext_lo(acc);                                                       \
+    acc_hi = ext_hi(acc);                                                       \
+    carry_lo = lsrs(acc_lo, LIMB_SIZE);                                         \
+    carry_hi = lsrs(acc_hi, LIMB_SIZE);                                         \
+    acc_lo = lups(carry_lo, 0);                                                 \
+    acc_hi = lups(carry_hi, 0);                                                 \
+    acc = upd_lo(acc, acc_lo);                                                  \
+    acc = upd_hi(acc, acc_hi);                                                  \
+  } while (0)
+
+// Macro to get the limb from the accumulator after MAC operations by extracting
+// the lower part of the accumulator, shifting it, and storing it in the output
+// buffer.
+#define GET_LIMB_FROM_ACC()                                                     \
+  do {                                                                          \
+    limb = srs(acc, 0);                                                         \
+    acc_limb_extraction = ups(limb, 0);                                         \
+    limb_top_bit = lsrs(acc_limb_extraction, 31);                               \
+    acc_limb_extraction = ups(limb_top_bit, 31);                                \
+    limb_top_bit = lsrs(acc_limb_extraction, 0);                                \
+    limb = limb + limb_top_bit;                                                 \
+  } while (0)
+
+void kmontgomery2(
+    adf::input_buffer<int32>& __restrict t_in,
+    adf::output_buffer<int32>& __restrict m_out
+) {
+  // pointers to vectors of 8 x int32 in DM banks
+  v8int32 chess_storage(DM_bankA) *__restrict t_ptr = (v8int32 chess_storage(DM_bankA) *__restrict)t_in.data();
+  v8int32 chess_storage(DM_bankC) *__restrict m_ptr = (v8int32 chess_storage(DM_bankC) *__restrict)m_out.data();
+
+  set_rnd(0); // floor rounding
+  clr_sat();  // clear saturation
+
+  // Accumulator used for MAC operations
+  v8acc80 chess_storage(bm0) acc;
+
+  // Accumulator and vector for carry extraction  
+  v4acc80 chess_storage(aml1) acc_lo;
+  v4acc80 chess_storage(amh1) acc_hi;
+  v4int64 chess_storage(wr0) carry_lo;
+  v4int64 chess_storage(wr1) carry_hi;
+
+  // Accumulator and vecroe for limb extraction 
+  v8acc48 chess_storage(aml2) acc_limb_extraction;
+  v8int32 chess_storage(wr2) limb;
+  v8int32 chess_storage(wr3) limb_top_bit;
+
+  v8int32 p_prime_limbs_vector[13];
+  for (int i = 0; i < 13; i++) {
+    for (int j = 0; j < 8; j++) {
+      p_prime_limbs_vector[i] = upd_elem(p_prime_limbs_vector[i], j, p_prime_limbs[i]);
+    }
+  }
+
+  // m = ( (t mod R) x p' ) mod R
+
+  // k = 0 : t[0]*p_prime_limbs[0] is the first product
+  acc = mul(t_ptr[0], p_prime_limbs_vector[0]);
+  GET_LIMB_FROM_ACC();
+  m_ptr[0] = limb;
+  EXTRACT_CARRY_FROM_ACC();
+
+  // k = 1 .. (N_LIMBS - 1): accumulate t[i]*p_prime_limbs[k-i] for i=0..k
+  for (int k = 1; k < N_LIMBS; k++) {
+    for (int i = 0; i <= k; i++) {
+      acc = mac(acc, t_ptr[i], p_prime_limbs_vector[k - i]);
+    }
+    GET_LIMB_FROM_ACC();
+    m_ptr[k] = limb;
+    EXTRACT_CARRY_FROM_ACC();
+  }
+}
