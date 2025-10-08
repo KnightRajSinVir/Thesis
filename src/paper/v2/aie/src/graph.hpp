@@ -3,7 +3,7 @@
 #include <adf.h>
 #include "kernels/kernels.hpp"
 
-#define BANK_SIZE 26
+#define BANK_SIZE 32
 
 using namespace adf;
 
