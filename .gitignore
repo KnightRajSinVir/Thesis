@@ -1,3 +1,9 @@
 work/
 c_out_fixed.txt
 src/testing
+logs/
+xup_aie_training/
+vivado.jou
+vivado.log
+.vscode/
+.Xil/

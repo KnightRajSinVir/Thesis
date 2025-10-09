@@ -1,0 +1,171 @@
+Options allowed in a config file:
+
+  -D [ --define ] arg                   <name=definition> Predefine name as a 
+                                        macro with definition. This option is 
+                                        passed to the openCL preprocessor.
+  -I [ --include ] arg                  Add the directory to the list of 
+                                        directories to be searched for header 
+                                        files. This option is passed to the 
+                                        openCL preprocessor
+  -c [ --compile ]                      Run a compile mode
+  -f [ --platform ] arg                 Specify path to a platform 
+                                        specification(XPFM) or hardware 
+                                        specification(XSA)
+  -o [ --output ] arg                   Set output file name. Default: a.xclbin
+                                        (link, build), a.xo (compile)
+  -t [ --target ] arg (=hw)             Specify a target: [x86sim|hw]; default 
+                                        is hw
+  --input_files arg                     Specify input file(s). Input file(s) 
+                                        can also be specified positionally 
+                                        without using the --input_files option.
+  --log_dir arg                         Specify a directory to copy internally 
+                                        generated log files to
+  --part arg                            Use a physical device model for 
+                                        constraint mapping
+  --report_dir arg                      Specify a directory to copy report 
+                                        files to
+  --work_dir arg                        Specify a working directory for output 
+                                        files and directories
+
+[aie] section:
+  --aie.Xchess arg                      Pass kernel-specific option to the 
+                                        CHESS project specified as 
+                                        <kernel>:<optionid>=<value>
+  --aie.Xelfgen arg                     Pass general option to the Elf 
+                                        Generator Makefile (e.g. -j2)
+  --aie.Xmapper arg                     Pass general option to the MAPPER phase
+                                        (e.g. -Xmapper=DisableFloorplanning)
+  --aie.Xpreproc arg                    Pass general option to the PREPROCESSOR
+                                        phase for all source code compilations 
+                                        AIE/PS/PL/x86sim (e.g. -D...)
+  --aie.Xpslinker arg                   Pass general option to the PS LINKER 
+                                        phase (e.g. -L... -l...)
+  --aie.Xrouter arg                     Pass general option to the ROUTER phase
+                                        (e.g. -Xrouter=dmaFIFOsInFreeBankOnly)
+  --aie.Xx86sim arg                     Pass x86sim-specific option to the 
+                                        compiler. 'clangStaticAnalyzer'    : 
+                                        enable clang static analyzer for kernel
+                                        source code
+  --aie.Xxloptstr arg                   Option string to enable or disable 
+                                        optimizations in XLOpt level 1,2. 
+                                        "-xlinline-threshold=T" : set inlining 
+                                        threshold to T (default T = 5000, only 
+                                        for optlevel=2). "-annotate-pragma" : 
+                                        insertion of loop unrolling, 
+                                        pipelining, and flattening pragmas 
+                                        (default = true)
+  --aie.adf-api-log-level arg           ADF API log-level (0: errors, 1: 
+                                        level-0 + warnings, 2: level-1 + info 
+                                        messages, 3: level-2 + debug messages) 
+                                        (default: 2)
+  --aie.aie2ipu-base-addr arg           AIE2IPU base address for CDO generation
+                                        (default: 0x40000000)
+  --aie.broadcast-enable-core           Enable all AIE cores associated with a 
+                                        graph using broadcast. This option 
+                                        reserves one broadcast channel in the 
+                                        array for core enabling 
+                                        purpose.(default: true)
+  --aie.constraints arg                 Specify constraints files in JSON 
+                                        format (zero or more)
+  --aie.cpp-std arg                     Specify C++ standard (default: 
+                                        "-std=c++17")
+  --aie.disable-multirate               Disable multirate in ADF graphs 
+                                        (default: false)
+  --aie.enable-partition arg            Use this option to enable AIE partition
+                                        flow. Usage --enable-partition="false"|
+                                        "<partition_start_column:partition_num_
+                                        columns>" (default: false)
+  --aie.event-trace arg                 Event trace configuration levels
+  --aie.event-trace-mem-tile arg        Event trace configuration levels for 
+                                        memory tile
+  --aie.event-trace-port arg            Set the AI Engine event tracing port 
+                                        (default: gmio)
+  --aie.fast-floats                     Enable fast implementation for linear 
+                                        floating point scalar operations like 
+                                        add, sub, mul and compare
+  --aie.fast-nonlinearfloats            Enable fast implementation for 
+                                        non-linear floating point scalar 
+                                        operations like sine/cosine, sqrt and 
+                                        inv 
+  --aie.fastmath                        Enable fast implementations of 
+                                        float2fix, fplt and fpge 
+  --aie.float-accuracy arg              Select the float accuracy in aie-ml
+  --aie.graph-iterator-event            Enable event trace based on graph 
+                                        iteration count at runtime (default: 
+                                        false)
+  --aie.heapsize arg                    Heap size in bytes per processor 
+                                        (default: 1024)
+  --aie.kernel-linting                  Consistency checking between graphs and
+                                        kernels (default: false)
+  --aie.known-tripcount                 converting unknown trip count to Known 
+                                        trip count
+  --aie.lock-fence-mode arg             Allows more aggressive scheduling 
+                                        around acquire and release of io 
+                                        buffers (default: 1). 
+                                        -lock-fence-mode=0 : disable aggressive
+                                        scheduling. -lock-fence-mode=1 : use 
+                                        aggressive scheduling except for 
+                                        multi-layer designs
+  --aie.log-level arg                   Log level for verbose logging. Only 
+                                        applicable with -verbose (range: [0,5],
+                                        default: 2 with -verbose, 0 with 
+                                        -quiet, 1 otherwise)
+  --aie.max-layer-ctrl-param-size arg   Specify maximum size for layer control 
+                                        parameters in 32-bit words per 
+                                        processor (for multi-layer-opt=2 mode) 
+                                        (default: 256)
+  --aie.multi-layer-opt arg             Multi-Layer ADF optimization level (0: 
+                                        No optimization, 1: Optimize program 
+                                        memory (parameterize register configs 
+                                        only), 2: Optimize program memory (full
+                                        parameterization) and data memory) 
+                                        (default: 0)
+  --aie.no-init                         Prevent Initialization when loading the
+                                        resulting executable (default: false)
+  --aie.nodot-graph                     Don't generate dot graph files 
+                                        (default: false)
+  --aie.num-trace-streams arg           Number of trace streams (default: 16)
+  --aie.output-archive arg              Specify output archive name which will 
+                                        contain compiled AIE artifacts 
+                                        (default: 'libadf.a')
+  --aie.pl-freq arg                     Specify frequency (in MHz) for all PL 
+                                        kernels and PLIOs.(default:1/4 Of 
+                                        Device Speed Grade Specfic AIE Freq). 
+                                        Usage --pl-freq=<value>
+  --aie.pl-register-threshold arg       Specify frequency (in MHz) threshold 
+                                        for registered AIE-PL 
+                                        crossing.(default:1/8 Of Device Speed 
+                                        Grade Specfic AIE Freq)
+  --aie.quiet                           Suppress output of the aiecompiler
+  --aie.repo-path arg                   Path for hls ip
+  --aie.sdf-graph arg                   SDF graph file 
+  --aie.stacksize arg                   Stack size in bytes per processor 
+                                        (default: 1024)
+  --aie.trace-plio-width arg            PLIO width for trace streams (default: 
+                                        64)
+  --aie.verbose                         Verbose output of the aiecompiler
+  --aie.workdir arg                     Specify a working directory (default 
+                                        'Work')
+  --aie.xlopt arg                       Enable a combination of kernel 
+                                        optimizations based on the opt level 
+                                        (allowed levels = 0-2, default = 1). 
+                                        -xlopt=0 : no kernel optimizations. 
+                                        -xlopt=1 : computation of heap size, 
+                                        generation of guidance based on LLVM IR
+                                        analysis, and insertion of loop 
+                                        pragmas. -xlopt=2 : optimizations of 
+                                        xlopt=1 and in addition loop peeling 
+                                        for unrolled loops and automatic 
+                                        inlining
+
+[drc] section:
+  --drc.disable arg                     Disable the Design Rule Check for the 
+                                        specified ID. A disabled check is not 
+                                        executed.
+  --drc.enable arg                      Enable the Design Rule Check for the 
+                                        specified ID.
+  --drc.severity arg                    Change the severity of a Design Rule 
+                                        Check; format <ID>:<severity>[:context]
+  --drc.waive arg                       Waive the Design Rule Check for the 
+                                        specified ID. A waived check is still 
+                                        performed, but marked as waived.

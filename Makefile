@@ -3,7 +3,7 @@
 # -------------------------------------------------------------------
 
 # Set this to the folder that contains both 'aie/' and 'pl/' subdirectories.
-PARENT_DIR ?= /home/rajdeep/Thesis/src/paper/v2
+PARENT_DIR ?= /home/rajdeep/Thesis/src/paper/v2/
 
 # Derive AIE_DIR, PL_DIR and HOST_SRC from PARENT_DIR
 AIE_DIR    := $(PARENT_DIR)/aie
@@ -37,6 +37,7 @@ aie_compile_hw:
 	@mkdir -p $(AIE_DIR)/work
 	@cd $(AIE_DIR)/work && \
 	v++ -c --mode aie \
+		--aie.stacksize 4096 \
 	    --platform=$(VITIS_PLATFORM) \
 	    --target=hw \
 	    --work_dir=hw \
