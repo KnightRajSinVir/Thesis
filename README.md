@@ -4,7 +4,7 @@
 **Optimizing Montgomery Multiplication for Elliptic Curve Cryptography on the Xilinx VCK5000 Platform**
 
 ## Overview:
-This project focuses on enhancing the performance of Elliptic Curve Cryptography (ECC) by accelerating one of its core mathematical operations, Large Number Modular Multiplication. By leveraging the heterogeneous architecture of the VCK5000, including AI Engines, Programmable Logic (PL), and Adaptable Processing Units (APUs). 
+This project focuses on enhancing the performance of Elliptic Curve Cryptography (ECC) by accelerating one of its core mathematical operations, Large Number Modular Multiplication. By leveraging the heterogeneous architecture of the VCK5000, including AI Engines, Programmable Logic (PL), and Adaptable Processing Units (APUs), we aim to achieve significant performance improvements. 
 
 
 ## Motivation:
@@ -29,10 +29,8 @@ With emerging applications such as IoT, autonomous systems, and privacy-preservi
 ```
 📂 thesis-project
  ├ 📜 README.md          <- Project overview and goals
- ├ 📂 src/               <- Source files: Montgomery multiplicationß
+ ├ 📂 src/               <- Source files: Montgomery multiplication
  ├ 📂 platform/          <- VCK5000-specific configuration
- ├ 📂 results/           <- Benchmark results
- ├ 📂 docs/              <- Thesis documents
  └ 📜 report.pdf         <- Final Thesis Report
 ```
 

@@ -6,7 +6,7 @@ from helper_functions import mod_inverse, montgomery_multiplication
 # Parameters for the graph
 SIMD_SIZE = 8
 BANK_SIZE = 32
-NOF_ROUNDS = 32
+NOF_ROUNDS = 16384
 
 def file_writer(fname, data):
     with open(fname, 'w') as fp: 
