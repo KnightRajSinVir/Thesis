@@ -25,17 +25,6 @@ With emerging applications such as IoT, autonomous systems, and privacy-preservi
 
 ---
 
-## Project Structure:
-```
-📂 thesis-project
- ├ 📜 README.md          <- Project overview and goals
- ├ 📂 src/               <- Source files: Montgomery multiplication
- ├ 📂 platform/          <- VCK5000-specific configuration
- └ 📜 report.pdf         <- Final Thesis Report
-```
-
----
-
 ## Progress Summary:
 - Literature review on ECC, Montgomery multiplication, and hardware acceleration techniques.
 - Reproduced baseline implementation results.
