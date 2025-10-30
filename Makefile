@@ -37,7 +37,7 @@ aie_compile_hw:
 	@mkdir -p $(AIE_DIR)/work
 	@cd $(AIE_DIR)/work && \
 	v++ -c --mode aie \
-		--aie.stacksize 4096 \
+		--aie.stacksize 13000 \
 		--aie.multi-layer-opt 2 \
 	    --platform=$(VITIS_PLATFORM) \
 	    --target=hw \

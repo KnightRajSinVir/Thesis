@@ -1,0 +1,18 @@
+Core Tile,Kernel Name,Total Bundles,Total NOPs,NOP Bundles,NOP Percentage,Effective Utilization
+21_0,x1_sub_x3,6470,1422,931,21.98,78.02
+21_2,lambda_x1_x3_montgomery1,8764,2061,1125,23.52,76.48
+21_3,lambda_square_montgomery1,8764,2062,1127,23.53,76.47
+22_0,x1_add_x2,2744,662,470,24.13,75.87
+22_1,lambda_square_montgomery4,5924,1391,897,23.48,76.52
+22_3,lambda_square_montgomery2,5218,1284,722,24.61,75.39
+23_0,lambda_square_sub_x1_x2,6582,1435,950,21.80,78.20
+23_2,lambda_square_montgomery3,8584,2022,1101,23.56,76.44
+25_0,lambda_x1_x3_sub_y1,8154,1849,1198,22.68,77.32
+25_1,lambda_x1_x3_montgomery3,8568,2016,1100,23.53,76.47
+26_0,lambda_x1_x3_montgomery4,5940,1399,898,23.55,76.45
+26_2,lambda_x1_x3_montgomery2,5218,1286,721,24.65,75.35
+27_1,lambda_montgomery4,5940,1399,898,23.55,76.45
+27_2,lambda_montgomery3,8584,2024,1100,23.58,76.42
+28_0,lambda_montgomery1,8764,2059,1125,23.49,76.51
+28_2,lambda_montgomery2,5218,1284,722,24.61,75.39
+TOTAL,All Kernels,109436,25655,15085,23.44,76.56

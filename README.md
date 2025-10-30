@@ -1,7 +1,7 @@
 # Thesis Project: Accelerating Elliptic Curve Cryptography using Xilinx VCK5000 Platform
 
 ## Project Title:
-**Optimizing Montgomery Multiplication for Elliptic Curve Cryptography on the Xilinx VCK5000 Platform**
+**Optimizing Elliptic Curve Cryptography on the Xilinx VCK5000 Platform**
 
 ## Overview:
 This project focuses on enhancing the performance of Elliptic Curve Cryptography (ECC) by accelerating one of its core mathematical operations, Large Number Modular Multiplication. By leveraging the heterogeneous architecture of the VCK5000, including AI Engines, Programmable Logic (PL), and Adaptable Processing Units (APUs), we aim to achieve significant performance improvements. 

@@ -1,0 +1,4 @@
+ERROR: [aiecompiler 77-4170] Unable to find specified platform : xilinx_vck5000_gen4x8_qdma_2_202220_1
+
+Compilation Failed
+(WARNING:0, CRITICAL-WARNING:0, ERROR:1)
