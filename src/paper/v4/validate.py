@@ -22,15 +22,6 @@ On mismatch, writes a corrected `c_out_fixed.txt` in the **same** format.
 
 import sys
 
-# Constants
-R = 1 << (31 * 13)
-
-# your 403-bit modulus n = Σ (q_limbs[i] << (31*i))
-p_val = 0x1A0111EA397FE69A4B1BA7B6434BACD764774B84F38512BF6730D2A0F6B0F6241EABFFFEB153FFFFB9FEFFFFFFFFAAAB  
-
-# your Montgomery constant p' = Σ (p_prime_limbs[i] << (31*i))
-p_prime_val =  0x627A0CEB06106FEAAFC9468B316FEE268CF5819ECCA0E8EB2DB4C16EF2EF0C8E30B48286ADB92D9D113E889F3FFFCFFFCFFFD
-
 
 def read_lines(fname, expect):
     with open(fname) as f:
@@ -63,17 +54,27 @@ def write_c_out_fixed(blocks, fname="c_out_fixed.txt"):
             row1 = [blocks[j][i] for j in range(4, 8)]
             f.write(" ".join(str(x) for x in row1) + "\n")
 
+# Constants
+R = 1 << (27* 10)
+
+# your 403-bit modulus n = Σ (q_limbs[i] << (31*i))
+p_val = 0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47
+
+# your Montgomery constant p' = Σ (p_prime_limbs[i] << (31*i))
+p_prime_val = 0x2c6ff57a22b791888c6bd8afcbd01833da809ede7d651eca6ac987d20782e4866389
+
+
 def main():
     if len(sys.argv) != 5:
         print(f"Usage: {sys.argv[0]} x3_in.txt y3_in.txt x3_test.txt y3_test.txt")
         sys.exit(1)
 
-    x3_lines = read_lines(sys.argv[1], 26)
-    y3_lines = read_lines(sys.argv[2], 26)
-    x3_test_lines = read_lines(sys.argv[3], 26)
-    y3_test_lines = read_lines(sys.argv[4], 26)
+    x3_lines = read_lines(sys.argv[1], 20)
+    y3_lines = read_lines(sys.argv[2], 20)
+    x3_test_lines = read_lines(sys.argv[3], 20)
+    y3_test_lines = read_lines(sys.argv[4], 20)
 
-    LIMBS_IN, LIMBS_OUT, BITS = 13, 26, 31
+    LIMBS_IN, LIMBS_OUT, BITS = 10, 10, 27
 
     x3_blocks = [[0] * LIMBS_IN for _ in range(8)]
     y3_blocks = [[0] * LIMBS_IN for _ in range(8)]

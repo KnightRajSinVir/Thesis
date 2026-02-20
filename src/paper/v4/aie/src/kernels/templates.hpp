@@ -1,0 +1,511 @@
+#pragma once
+
+#include "constants.hpp"
+
+#include <adf.h>
+#include <aie_api/aie.hpp>
+
+// BANK pointer aliases
+using BANK_A_PTR = v8int32 chess_storage(DM_bankA) *restrict;
+using BANK_B_PTR = v8int32 chess_storage(DM_bankB) *restrict;
+using BANK_C_PTR = v8int32 chess_storage(DM_bankC) *restrict;
+
+using IN_BUFFER  = adf::input_buffer<int32, adf::extents<640>>& __restrict;
+using OUT_BUFFER = adf::output_buffer<int32, adf::extents<640>>& __restrict;
+
+// -----------------------------------------------------------------------------
+// Limb extract helper
+// -----------------------------------------------------------------------------
+#define GET_LIMB_FROM_ACC(i)                                                   \
+  do {                                                                         \
+    tmp_80 = lups(*(c_base + i), 5);                                           \
+    tmp_48 = as_v16acc48(tmp_80);                                              \
+    v16int32_data_1 = lsrs(tmp_48, 4);                                         \
+    v16int32_data_2 = shuffle16(v16int32_data_1, 0, 0xECA86420, 0x0);          \
+    v8int32_data = ext_w(v16int32_data_2, 0);                                  \
+    tmp_80 = lups(v8int32_data, 0);                                            \
+    *(c_base + i) = srs(tmp_80, 1);                                            \
+  } while (0)
+
+template<int N, int START = 0, int STRIDE = 1, class CPtr>
+inline __attribute__((always_inline)) void get_limb_repeat(
+    v8acc80 &tmp_80, v16acc48 &tmp_48,
+    v16int32 &v16int32_data_1, v16int32 &v16int32_data_2,
+    v8int32 &v8int32_data, CPtr c_base)
+{
+    if constexpr (N > 0) {
+        GET_LIMB_FROM_ACC(START);
+        get_limb_repeat<N - 1, START + STRIDE, STRIDE>(
+            tmp_80, tmp_48, v16int32_data_1, v16int32_data_2, v8int32_data, c_base);
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Lowest-level multiply-accumulate term (pointer types fully generic)
+// -----------------------------------------------------------------------------
+template<int AI, int BI, bool First, class APtr, class BPtr>
+inline __attribute__((always_inline)) void mac_term(
+    v8acc80 &acc, v16int32 &a, v16int32 &b, APtr a_base, BPtr b_base)
+{
+    a = upd_w(a, 0, *(a_base + AI));
+    b = upd_w(b, 0, *(b_base + BI));
+    if constexpr (First) {
+        acc = lmul8(a, 0, kLaneMask, b, 0, kLaneMask);
+    } else {
+        acc = lmac8(acc, a, 0, kLaneMask, b, 0, kLaneMask);
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Carry store for intermediate rows (generic c_base type)
+// -----------------------------------------------------------------------------
+template<int C_OFF, class CPtr>
+inline __attribute__((always_inline)) void carry_store(
+    v8acc80 &acc, v8int32 &carry, CPtr c_base)
+{
+    carry             = srs(acc, 27);
+    *(c_base + C_OFF) = srs(acc, 0);
+    acc               = lups(carry, 0);
+}
+
+// -----------------------------------------------------------------------------
+// Inner row: fully unrolled A[i] * B[k-i] for fixed k
+// -----------------------------------------------------------------------------
+template<int N, int K, int A0, int B0, int AI, int AI_END, bool FirstInit, class APtr, class BPtr>
+struct InnerRow {
+    static inline __attribute__((always_inline)) void run(
+        v8acc80 &acc, v16int32 &a, v16int32 &b, APtr a_base, BPtr b_base)
+    {
+        if constexpr (AI <= AI_END) {
+            mac_term<A0 + AI, B0 + (K - AI), FirstInit>(acc, a, b, a_base, b_base);
+            InnerRow<N, K, A0, B0, AI + 1, AI_END, false, APtr, BPtr>::run(
+                acc, a, b, a_base, b_base);
+        }
+    }
+};
+
+// -----------------------------------------------------------------------------
+// One row (k): does InnerRow then the intermediate carry_store
+// -----------------------------------------------------------------------------
+template<int N, int K, int A0, int B0, int C0, class APtr, class BPtr, class CPtr>
+struct Row {
+    static inline __attribute__((always_inline)) void run(
+        v8acc80 &acc, v16int32 &a, v16int32 &b, v8int32 &carry,
+        APtr a_base, BPtr b_base, CPtr c_base)
+    {
+        static_assert(N > 0, "N must be positive");
+
+        constexpr int AI_START = (K < N) ? 0 : (K - (N - 1));
+        constexpr int AI_END   = (K < N) ? K : (N - 1);
+        constexpr bool FirstOfBlock = (K == 0) && (AI_START == 0);
+
+        InnerRow<N, K, A0, B0, AI_START, AI_END, FirstOfBlock, APtr, BPtr>::run(
+            acc, a, b, a_base, b_base);
+        carry_store<C0 + K>(acc, carry, c_base);
+    }
+};
+
+// -----------------------------------------------------------------------------
+// SchoolbookUpto: the single "primitive"
+// - Executes rows k=0..LAST_K (LAST_K=min(K_END, 2N-2))
+// - On true final k=2N-2, writes limb and last carry to C0+K and C0+K+1
+//   (and correctly seeds FirstOfBlock for the N==1 corner case).
+// -----------------------------------------------------------------------------
+template<int N, int A0, int B0, int C0, int K_END, class APtr, class BPtr, class CPtr, int K = 0>
+struct SchoolbookUpto {
+    static inline __attribute__((always_inline)) void run(
+        v8acc80 &acc, v16int32 &a, v16int32 &b, v8int32 &carry,
+        APtr a_base, BPtr b_base, CPtr c_base)
+    {
+        static_assert(N > 0, "N must be positive");
+        static_assert(K_END >= 0, "K_END must be >= 0");
+
+        constexpr int FINAL_K = 2 * N - 2;
+        constexpr int LAST_K  = (K_END < FINAL_K ? K_END : FINAL_K);
+
+        // if constexpr (K < LAST_K) {
+        //     Row<N, K, A0, B0, C0, APtr, BPtr, CPtr>::run(
+        //         acc, a, b, carry, a_base, b_base, c_base);
+        //     SchoolbookUpto<N, A0, B0, C0, K_END, APtr, BPtr, CPtr, K + 1>::run(
+        //         acc, a, b, carry, a_base, b_base, c_base);
+        // } else if constexpr (K == LAST_K) {
+        //     if constexpr (LAST_K == FINAL_K) {
+        //         // true final row: seed FirstOfBlock correctly (covers N==1 case)
+        //         constexpr int AI_START = (K < N) ? 0 : (K - (N - 1));
+        //         constexpr int AI_END   = (K < N) ? K : (N - 1);
+        //         constexpr bool FirstOfBlock = (K == 0) && (AI_START == 0);
+
+        //         InnerRow<N, K, A0, B0, AI_START, AI_END, FirstOfBlock, APtr, BPtr>::run(
+        //             acc, a, b, a_base, b_base);
+        //         *(c_base + C0 + K)     = srs(acc, 0);
+        //         *(c_base + C0 + K + 1) = srs(acc, 28);
+        //     } else {
+        //         // stopping early (partial): do a normal row and stop
+        //         Row<N, K, A0, B0, C0, APtr, BPtr, CPtr>::run(
+        //             acc, a, b, carry, a_base, b_base, c_base);
+        //     }
+        // }
+
+        if constexpr (K == (2 * N - 2)) {
+            constexpr int AI_START = (K < N) ? 0 : (K - (N - 1));
+            constexpr int AI_END   = (K < N) ? K : (N - 1);
+            InnerRow<N, K, A0, B0, AI_START, AI_END, false, APtr, BPtr>::run(acc, a, b, a_base, b_base);
+
+            *(c_base + C0 + K)     = srs(acc, 0);
+            *(c_base + C0 + K + 1) = srs(acc, 28);
+
+        } else {
+            Row<N, K, A0, B0, C0, APtr, BPtr, CPtr>::run(acc, a, b, carry, a_base, b_base, c_base);
+            SchoolbookUpto<N, A0, B0, C0, K_END, APtr, BPtr, CPtr, K + 1>::run(
+                acc, a, b, carry, a_base, b_base, c_base);
+        }
+    }
+};
+
+// -----------------------------------------------------------------------------
+// Tiny helper to select the B-th accumulator from a parameter pack
+// (your exact simple AccAt/acc_select implementation)
+// -----------------------------------------------------------------------------
+template<int IDX, typename... Ts>
+struct AccAt;
+
+// Partial specialization for the base case (IDX = 0)
+template<typename First, typename... Rest>
+struct AccAt<0, First, Rest...>
+{
+    using type = First;
+    static inline __attribute__((always_inline)) First& get(First& f, Rest&...)
+    {
+        return f;
+    }
+};
+
+// Partial specialization for the recursive case (IDX > 0)
+template<int IDX, typename First, typename... Rest>
+struct AccAt<IDX, First, Rest...>
+{
+    using type = typename AccAt<IDX - 1, Rest...>::type;
+    static inline __attribute__((always_inline)) type& get(First&, Rest&... r)
+    {
+        return AccAt<IDX - 1, Rest...>::get(r...);
+    }
+};
+
+// The acc_select function that uses the AccAt helper
+template<int IDX, typename... T>
+inline __attribute__((always_inline)) typename AccAt<IDX, T...>::type&
+acc_select(T&... t)
+{
+    return AccAt<IDX, T...>::get(t...);
+}
+
+// -----------------------------------------------------------------------------
+// BlocksUpto: NB blocks of N-limb products, each with its own A0/B0/C0
+// -----------------------------------------------------------------------------
+template<int N, int NB, int K_END, class APtr, class BPtr, class CPtr, int B = 0>
+struct BlocksUpto {
+    template<typename... Accs>
+    static inline __attribute__((always_inline)) void run(
+        v16int32 &a, v16int32 &b, v8int32 &carry,
+        APtr a_base, BPtr b_base, CPtr c_base,
+        Accs&... accs)
+    {
+        static_assert(N > 0, "N must be positive");
+        static_assert(K_END >= 0, "K_END must be >= 0");
+        static_assert(sizeof...(Accs) >= NB, "Not enough accumulators passed for NB blocks");
+
+        if constexpr (B < NB) {
+            constexpr int A0 = B * N;
+            constexpr int B0 = B * N;
+            constexpr int C0 = B * (2 * N);
+
+            auto &accB = acc_select<B>(accs...);
+
+            SchoolbookUpto<N, A0, B0, C0, K_END, APtr, BPtr, CPtr>::run(
+                accB, a, b, carry, a_base, b_base, c_base);
+
+            BlocksUpto<N, NB, K_END, APtr, BPtr, CPtr, B + 1>::template run<Accs...>(
+                a, b, carry, a_base, b_base, c_base, accs...);
+        }
+    }
+};
+
+// -----------------------------------------------------------------------------
+// One-step addition helper (K==0 has implicit zero carry-in; K>0 uses carry)
+// -----------------------------------------------------------------------------
+template<int N, int A0, int B0, int C0, int K_END, class APtr, class BPtr, class CPtr, int K = 0>
+struct AddUpto {
+    static inline __attribute__((always_inline)) void run(
+        v8acc80 &acc, v8int32 &carry, APtr a_base, BPtr b_base, CPtr c_base)
+    {
+        static_assert(N > 0, "N must be positive");
+        static_assert(K_END >= 0, "K_END must be >= 0");
+
+        // Cap steps to available limbs
+        constexpr int LAST_K = (K_END < (N - 1) ? K_END : (N - 1));
+
+        if constexpr (K <= LAST_K) {
+            // Load current 28-bit limb vectors
+            v8int32 a_vec = *(a_base + (A0 + K));
+            v8int32 b_vec = *(b_base + (B0 + K));
+
+            // Sum with carry-in only after step 0
+            v8int32 sum_vec = (K == 0) ? (a_vec + b_vec) : (a_vec + b_vec + carry);
+
+            // Push sum into the accumulator and propagate/store limb+carry
+            acc = lups(sum_vec, 0);
+            carry_store<C0 + K>(acc, carry, c_base);
+
+            // Next step
+            AddUpto<N, A0, B0, C0, K_END, APtr, BPtr, CPtr, K + 1>::run(
+                acc, carry, a_base, b_base, c_base);
+        }
+    }
+};
+
+// -----------------------------------------------------------------------------
+// Multi-block addition, patterned after BlocksUpto (note C0 stride = N)
+// -----------------------------------------------------------------------------
+template<int N, int NB, int K_END, class APtr, class BPtr, class CPtr, int B = 0>
+struct BlocksAddUpto {
+    template<typename... Accs>
+    static inline __attribute__((always_inline)) void run(
+        APtr a_base, BPtr b_base, CPtr c_base, v8int32 &carry, Accs&... accs)
+    {
+        static_assert(N > 0, "N must be positive");
+        static_assert(K_END >= 0, "K_END must be >= 0");
+
+        if constexpr (B < NB) {
+            constexpr int A0 = B * N;
+            constexpr int B0 = B * N;
+            constexpr int C0 = B * N;     // addition output is N limbs per block
+
+            // Pick B-th accumulator via acc_select
+            auto &accB = acc_select<B>(accs...);
+
+            // Perform K steps (capped to N-1), propagating carry between steps
+            AddUpto<N, A0, B0, C0, K_END, APtr, BPtr, CPtr>::run(
+                accB, carry, a_base, b_base, c_base);
+
+            // Next block
+            BlocksAddUpto<N, NB, K_END, APtr, BPtr, CPtr, B + 1>::template run<Accs...>(
+                a_base, b_base, c_base, carry, accs...);
+        }
+    }
+};
+
+// -----------------------------------------------------------------------------
+// One-step subtraction helper (two's-complement style with 29-bit base)
+// -----------------------------------------------------------------------------
+template<int N, int A0, int B0, int C0, int K_END, class APtr, class BPtr, class CPtr, int K = 0>
+struct SubUpto {
+    static inline __attribute__((always_inline)) void run(
+        v8acc80 &acc, v8int32 &carry, APtr a_base, BPtr b_base, CPtr c_base)
+    {
+        static_assert(N > 0, "N must be positive");
+        static_assert(K_END >= 0, "K_END must be >= 0");
+
+        // Cap steps to available limbs
+        constexpr int LAST_K = (K_END < (N - 1) ? K_END : (N - 1));
+
+        if constexpr (K <= LAST_K) {
+            // Load current 28-bit limb vectors
+            v8int32 a_vec = *(a_base + (A0 + K));
+            v8int32 b_vec = *(b_base + (B0 + K));
+
+            v8int32 sum_vec;
+            if constexpr (K == 0) {
+                sum_vec = *(v8int32 *)(all_28s) + a_vec - b_vec;
+            } else if constexpr (K == N - 1) {
+                sum_vec = a_vec - b_vec - *(v8int32 *)(all_ones);
+            } else {
+                sum_vec = *(v8int32 *)(all_28s) + a_vec - b_vec - carry;
+            }
+
+            // Push sum into the accumulator and propagate/store limb+carry
+            acc = lups(sum_vec, 0);
+            carry_store<C0 + K>(acc, carry, c_base);
+
+            // Next step
+            SubUpto<N, A0, B0, C0, K_END, APtr, BPtr, CPtr, K + 1>::run(
+                acc, carry, a_base, b_base, c_base);
+        }
+    }
+};
+
+// -----------------------------------------------------------------------------
+// Multi-block subtraction, patterned after BlocksUpto (note C0 stride = N)
+// -----------------------------------------------------------------------------
+template<int N, int NB, int K_END, class APtr, class BPtr, class CPtr, int B = 0>
+struct BlocksSubUpto {
+    template<typename... Accs>
+    static inline __attribute__((always_inline)) void run(
+        APtr a_base, BPtr b_base, CPtr c_base, v8int32 &carry, Accs&... accs)
+    {
+        static_assert(N > 0, "N must be positive");
+        static_assert(K_END >= 0, "K_END must be >= 0");
+
+        if constexpr (B < NB) {
+            constexpr int A0 = B * N;
+            constexpr int B0 = B * N;
+            constexpr int C0 = B * N;     // subtraction output is N limbs per block
+
+            // Pick B-th accumulator via acc_select
+            auto &accB = acc_select<B>(accs...);
+
+            // Perform K steps (capped to N-1), propagating carry between steps
+            SubUpto<N, A0, B0, C0, K_END, APtr, BPtr, CPtr>::run(
+                accB, carry, a_base, b_base, c_base);
+
+            // Next block
+            BlocksSubUpto<N, NB, K_END, APtr, BPtr, CPtr, B + 1>::template run<Accs...>(
+                a_base, b_base, c_base, carry, accs...);
+        }
+    }
+};
+
+// -----------------------------------------------------------------------------
+// Thin "full" wrappers over *Upto* (so Schoolbook/Blocks are special cases)
+// -----------------------------------------------------------------------------
+template<int N, int A0, int B0, int C0, class APtr, class BPtr, class CPtr>
+inline __attribute__((always_inline)) void SchoolbookFull(
+    v8acc80 &acc, v16int32 &a, v16int32 &b, v8int32 &carry,
+    APtr a_base, BPtr b_base, CPtr c_base)
+{
+    constexpr int K_FINAL = 2 * N - 2;
+    SchoolbookUpto<N, A0, B0, C0, K_FINAL, APtr, BPtr, CPtr>::run(
+        acc, a, b, carry, a_base, b_base, c_base);
+}
+
+template<int N, int NB, class APtr, class BPtr, class CPtr, typename... Accs>
+inline __attribute__((always_inline)) void BlocksFull(
+    v16int32 &a, v16int32 &b, v8int32 &carry,
+    APtr a_base, BPtr b_base, CPtr c_base,
+    Accs&... accs)
+{
+    constexpr int K_FINAL = 2 * N - 2;
+    BlocksUpto<N, NB, K_FINAL, APtr, BPtr, CPtr>::template run<Accs...>(
+        a, b, carry, a_base, b_base, c_base, accs...);
+}
+
+// -----------------------------------------------------------------------------
+// Deduced-type convenience facades
+// -----------------------------------------------------------------------------
+
+// Partial Schoolbook up to K_END (inclusive cap)
+template<int N, int A0, int B0, int C0, int K_END, class APtr, class BPtr, class CPtr>
+inline __attribute__((always_inline)) void schoolbook_upto(
+    v8acc80 &acc, v16int32 &a, v16int32 &b, v8int32 &carry,
+    APtr a_base, BPtr b_base, CPtr c_base)
+{
+    SchoolbookUpto<N, A0, B0, C0, K_END, APtr, BPtr, CPtr>::run(
+        acc, a, b, carry, a_base, b_base, c_base);
+}
+
+// Full Schoolbook
+template<int N, int A0, int B0, int C0, class APtr, class BPtr, class CPtr>
+inline __attribute__((always_inline)) void schoolbook_full(
+    v8acc80 &acc, v16int32 &a, v16int32 &b, v8int32 &carry,
+    APtr a_base, BPtr b_base, CPtr c_base)
+{
+    SchoolbookFull<N, A0, B0, C0, APtr, BPtr, CPtr>(
+        acc, a, b, carry, a_base, b_base, c_base);
+}
+
+// Blocks up to K_END
+template<int N, int NB, int K_END, class APtr, class BPtr, class CPtr, typename... Accs>
+inline __attribute__((always_inline)) void blocks_upto(
+    v16int32 &a, v16int32 &b, v8int32 &carry,
+    APtr a_base, BPtr b_base, CPtr c_base,
+    Accs&... accs)
+{
+    BlocksUpto<N, NB, K_END, APtr, BPtr, CPtr>::template run<Accs...>(
+        a, b, carry, a_base, b_base, c_base, accs...);
+}
+
+// Full Blocks
+template<int N, int NB, class APtr, class BPtr, class CPtr, typename... Accs>
+inline __attribute__((always_inline)) void blocks_full(
+    v16int32 &a, v16int32 &b, v8int32 &carry,
+    APtr a_base, BPtr b_base, CPtr c_base,
+    Accs&... accs)
+{
+    BlocksFull<N, NB, APtr, BPtr, CPtr, Accs...>(
+        a, b, carry, a_base, b_base, c_base, accs...);
+}
+
+// Single-block, partial (0..K_END)
+template<int N, int A0, int B0, int C0, int K_END, class APtr, class BPtr, class CPtr>
+inline __attribute__((always_inline)) void add_upto(
+    v8acc80 &acc, v8int32 &carry, APtr a_base, BPtr b_base, CPtr c_base)
+{
+    AddUpto<N, A0, B0, C0, K_END, APtr, BPtr, CPtr>::run(
+        acc, carry, a_base, b_base, c_base);
+}
+
+// Single-block, full (all N limbs)
+template<int N, int A0, int B0, int C0, class APtr, class BPtr, class CPtr>
+inline __attribute__((always_inline)) void add_full(
+    v8acc80 &acc, v8int32 &carry, APtr a_base, BPtr b_base, CPtr c_base)
+{
+    constexpr int K_FINAL = N - 1;
+    AddUpto<N, A0, B0, C0, K_FINAL, APtr, BPtr, CPtr>::run(
+        acc, carry, a_base, b_base, c_base);
+}
+
+// Multi-block, partial (each block does 0..K_END)
+template<int N, int NB, int K_END, class APtr, class BPtr, class CPtr, typename... Accs>
+inline __attribute__((always_inline)) void blocks_add_upto(
+    APtr a_base, BPtr b_base, CPtr c_base, v8int32 &carry, Accs&... accs)
+{
+    BlocksAddUpto<N, NB, K_END, APtr, BPtr, CPtr>::template run<Accs...>(
+        a_base, b_base, c_base, carry, accs...);
+}
+
+// Multi-block, full (each block does all N limbs)
+template<int N, int NB, class APtr, class BPtr, class CPtr, typename... Accs>
+inline __attribute__((always_inline)) void blocks_add_full(
+    APtr a_base, BPtr b_base, CPtr c_base, v8int32 &carry, Accs&... accs)
+{
+    constexpr int K_FINAL = N - 1;
+    BlocksAddUpto<N, NB, K_FINAL, APtr, BPtr, CPtr>::template run<Accs...>(
+        a_base, b_base, c_base, carry, accs...);
+}
+
+// Single-block, partial (0..K_END)
+template<int N, int A0, int B0, int C0, int K_END, class APtr, class BPtr, class CPtr>
+inline __attribute__((always_inline)) void sub_upto(
+    v8acc80 &acc, v8int32 &carry, APtr a_base, BPtr b_base, CPtr c_base)
+{
+    SubUpto<N, A0, B0, C0, K_END, APtr, BPtr, CPtr>::run(
+        acc, carry, a_base, b_base, c_base);
+}
+
+// Single-block, full (all N limbs)
+template<int N, int A0, int B0, int C0, class APtr, class BPtr, class CPtr>
+inline __attribute__((always_inline)) void sub_full(
+    v8acc80 &acc, v8int32 &carry, APtr a_base, BPtr b_base, CPtr c_base)
+{
+    constexpr int K_FINAL = N - 1;
+    SubUpto<N, A0, B0, C0, K_FINAL, APtr, BPtr, CPtr>::run(
+        acc, carry, a_base, b_base, c_base);
+}
+
+// Multi-block, partial (each block does 0..K_END)
+template<int N, int NB, int K_END, class APtr, class BPtr, class CPtr, typename... Accs>
+inline __attribute__((always_inline)) void blocks_sub_upto(
+    APtr a_base, BPtr b_base, CPtr c_base, v8int32 &carry, Accs&... accs)
+{
+    BlocksSubUpto<N, NB, K_END, APtr, BPtr, CPtr>::template run<Accs...>(
+        a_base, b_base, c_base, carry, accs...);
+}
+
+// Multi-block, full (each block does all N limbs)
+template<int N, int NB, class APtr, class BPtr, class CPtr, typename... Accs>
+inline __attribute__((always_inline)) void blocks_sub_full(
+    APtr a_base, BPtr b_base, CPtr c_base, v8int32 &carry, Accs&... accs)
+{
+    constexpr int K_FINAL = N - 1;
+    BlocksSubUpto<N, NB, K_FINAL, APtr, BPtr, CPtr>::template run<Accs...>(
+        a_base, b_base, c_base, carry, accs...);
+}
