@@ -1,0 +1,2 @@
+vncserver -localhost no :2
+sudo ufw allow 5902/tcp
